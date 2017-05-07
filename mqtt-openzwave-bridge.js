@@ -67,7 +67,7 @@ client.on('connect', () => {
     logging.log('mqtt connected')
     mqttConnected = true
     client.subscribe(zwaveTopic + '/set/#')
-    client.subscribe(zwaveTopic + '/configure')
+    client.subscribe(zwaveTopic + '/configure/#')
 
     ///Wait for mqtt connection before we fire up the zwave controller the first time to ensure we capture all activity
     if (!ozwConnected) {
@@ -84,7 +84,6 @@ client.on('connect', () => {
         logging.log('connecting to ' + zwaveDevice)
         ozw.connect(zwaveDevice)
         ozwConnected = true
-
     }
 })
 
@@ -95,29 +94,30 @@ client.on('disconnect', () => {
 })
 
 
-//Parse the incomming mqtt message for some basic actions, or delve into the full API
+//Direct the zwave topic to the appropriate function
 client.on('message', (topic, message) => {
-    var trimmedTopic = topic.substring(zwaveTopic.length+1)
+    var trimmedTopic = topic.substring(zwaveTopic.length + 1)
     switch (true) {
         case /set/.test(trimmedTopic):
             zwaveSetMessage(topic, message)
-        break
+            break
         case /config/.test(trimmedTopic):
             zwaveConfigMessage(topic, message)
-        break
+            break
         default:
-        break
+            break
     }
 
 })
 
-function zwaveConfigMessage(topic, message)
-{
-    logging.log("zwaveConfigMessage("+topic+","+JSON.stringify(message, null, 2))
+
+function zwaveConfigMessage(topic, message) {
+    logging.log("zwaveConfigMessage(" + topic + "," + JSON.stringify(message, null, 2))
 }
 
-function zwaveSetMessage(topic, message)
-{
+
+//Parse the incomming mqtt message for some basic actions, or delve into the full API
+function zwaveSetMessage(topic, message) {
     try {
         //Trim (crudely) our zwave main topic
         topic = topic.substring(zwaveTopic.length + 5)
@@ -343,7 +343,7 @@ function nodeReady(nodeid, nodeinfo) {
                         '\t|%s|%s| %s: %s:\t%s\t', rdonly, wronly, ozwval.value_id, ozwval.label, ozwval.value))
                 }
         }
-        
+
         zwcallback('node ready', {
             nodeid: nodeid,
             nodeinfo: nodeinfo
