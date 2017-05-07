@@ -1,0 +1,27 @@
+FROM hypriot/rpi-node:latest
+
+ENV INSTALL_ZWAVE true
+
+# Compile and install openzwave lib
+RUN if [ x"$INSTALL_ZWAVE" = x"true" ]; then \
+    apt-get update && apt-get install -y \
+    libudev-dev \
+    pkg-config \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* \
+  && curl -RLo /openzwave.tar.gz http://old.openzwave.com/downloads/openzwave-1.4.164.tar.gz \
+  && mkdir /openzwave \
+  && tar xvzf /openzwave.tar.gz --strip-components=1 -C /openzwave \
+  && cd /openzwave && make && make install && cd .. \
+  && rm -rf /openzwave /openzwave.tar.gz \
+  ;fi
+  
+# needed so libopenzwave can be found
+RUN ldconfig
+
+RUN mkdir -p /usr/node_app
+COPY . /usr/node_app
+WORKDIR /usr/node_app
+RUN npm install --production
+
+CMD ["npm", "start"]

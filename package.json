@@ -1,0 +1,32 @@
+{
+    "name": "mqtt-openzwave-bridge",
+    "version": "0.0.1",
+    "description": "mqtt-openzwave-bridge",
+    "main": "mqtt-openzwave-bridge.js",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/newt80ns/mqtt-openzwave-bridge.git"
+    },
+    "author": {
+        "name": "Nate Stuart <nate.stuart@gmail.com>"
+    },
+    "scripts": {
+        "start": "node mqtt-openzwave-bridge.js"
+    },
+    "keywords": [
+        "zwave",
+        "z-wave",
+        "home automation",
+        "openzwave",
+        "open-zwave",
+        "mqtt",
+        "bridge"
+    ],
+    "dependencies": {
+        "mqtt": "^2.6.2",
+        "openzwave-shared": "^1.3.4",
+        "syslog": "^0.1.1",
+        "util": "^0.10.3"
+    }
+}
