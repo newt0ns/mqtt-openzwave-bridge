@@ -5,14 +5,17 @@ const OpenZwave = require('openzwave-shared')
 const mqtt = require('mqtt')
 const fs = require('fs')
 
-var ozwConfig = {}
 var ozw = null
+var ozwConfig = {}
+var openZwaveOptions = {}
 var ozwConnected = false
+var nodeMap = []
 var driverReadyStatus = false
 var allowunreadyupdates = true
 var mqttConnected = false
 var basedir = "/zwave/"
 var configFile = basedir + "OpenZwave.json"
+var nodeMapFile = basedir + "NodeMap.json"
 var UUIDPREFIX = "_macaddr_"
 var HOMENAME = "_homename_"
 
@@ -38,15 +41,18 @@ var ozwEvents = {
 const mqttHost = process.env.MQTT_HOST
 const mqttUsername = process.env.MQTT_USER
 const mqttPassword = process.env.MQTT_PASS
-const zwaveTopic = process.env.MQTT_ZWAVE_TOPIC
 const zwaveDevice = process.env.ZWAVE_DEVICE
+const zwaveTopic = (process.env.MQTT_ZWAVE_TOPIC).endsWith("/") ? process.env.MQTT_ZWAVE_TOPIC : process.env.MQTT_ZWAVE_TOPIC + "/"
 
-var openZwaveOptions = {}
-
+//Load zwave options file
 if (fs.existsSync(configFile)) {
     openZwaveOptions = JSON.parse(fs.readFileSync(configFile, "utf8"))
 }
 
+//Load node id to node name map file
+if (fs.existsSync(nodeMapFile)) {
+    nodeMap = JSON.parse(fs.readFileSync(nodeMapFile, "utf8"))
+}
 
 // Setup MQTT
 var mqttOptions = {}
@@ -56,7 +62,6 @@ if (mqttPassword !== null && mqttPassword !== undefined)
     mqttOptions.password = mqttPassword
 
 client = mqtt.connect(mqttHost, mqttOptions)
-
 
 // MQTT Observation
 client.on('error', (error) => {
@@ -113,14 +118,38 @@ client.on('message', (topic, message) => {
 
 function zwaveConfigMessage(topic, message) {
     logging.log("zwaveConfigMessage(" + topic + "," + JSON.stringify(message, null, 2))
+    try {
+        var args = JSON.stringify(message)
+
+        switch (true) {
+            case /setNodeName/.test(topic):
+                if (!(args.nodeid === 'undefined' || args.nodeid === null) && !(args.name === 'undefined' || args.name === null)) {
+                    nodeMap[args.nodeid] = args.name.replace("/", "_")
+                    fs.write(nodeMapFile, JSON.stringify(nodeMap))
+                }
+                break
+            case /getNodeNames/.test(topic):
+                zwcallback("config/getNodeNames", JSON.stringify(nodeMap))
+                break
+            case /unsetNodeName/.test(topic):            
+                if (!(args.nodeid === 'undefined' || args.nodeid === null) && !(args.name === 'undefined' || args.name === null)) {
+                    nodeMap[args.nodeid] = args.name.replace("/", "_")
+                    fs.write(nodeMapFile, JSON.stringify(nodeMap))
+                }
+                break
+        }
+
+    }
+    catch (err) {
+
+    }
+
 }
 
 
 //Parse the incomming mqtt message for some basic actions, or delve into the full API
 function zwaveSetMessage(topic, message) {
     try {
-        //Trim (crudely) our zwave main topic
-        topic = topic.substring(zwaveTopic.length + 5)
 
         logging.log(' mqtt message received, topic:' + topic + ', message: ' + message)
 
@@ -322,6 +351,7 @@ function nodeReady(nodeid, nodeinfo) {
         //
         logging.log('nodeReady: only|R|W| (nodeid-cmdclass-instance-index): type : current state')
         for (var comclass in ozwnode['classes']) {
+            
             switch (comclass) {
                 case 0x25: // COMMAND_CLASS_SWITCH_BINARY
                 case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
@@ -391,6 +421,24 @@ function controllerCommand(nodeid, state, errcode, help) {
 //dispatch OpenZwave events to mqtt
 function zwcallback(event, arghash) {
     logging.log('zwcallback: ' + util.format("%s, args: %j", event, arghash))
-    client.publish(zwaveTopic + '/' + event, JSON.stringify(arghash))
+    try {
+        var nodeDesc = ""
+        if (!(arghash['nodeid'] === 'undefined' || arghash['nodeid'] === null)) {
+            var nodeid = arghash['nodeid']
+            var nodeName = nodeMap[nodeid]
+            if (!(nodeName === 'undefined' || nodeName === null)) {
+                nodeDesc = "/" + nodeName + "/";
+            }
+            else {
+                nodeDesc = "/node_" + nodeid + "/"
+            }
+        }
+    }
+    catch (err) {
+        logging.log("zwcallback: error, " + err)
+    }
+
+    client.publish(zwaveTopic + nodeDesc + event, JSON.stringify(arghash))
+
 }
 
