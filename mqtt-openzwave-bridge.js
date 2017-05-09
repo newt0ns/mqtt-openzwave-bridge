@@ -132,11 +132,11 @@ function zwaveConfigMessage(topic, message) {
                     nodeMap[args.nodeid] = args.name.replace("/", "_")
                     fs.writeFile(nodeMapFile, JSON.stringify(nodeMap), function (err) {
                         if (err) {
-                            logging.error("Error saving nodeMapFile "+err)
+                            logging.error("Error saving nodeMapFile " + err)
                         }
                         logging.log("The nodeMapFile was saved!");
-                    }); 
-)
+                    });
+
                 }
                 break
             case /getNodeNames/.test(topic):
