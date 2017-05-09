@@ -71,8 +71,8 @@ client.on('error', (error) => {
 client.on('connect', () => {
     logging.log('mqtt connected')
     mqttConnected = true
-    client.subscribe(zwaveTopic + '/set/#')
-    client.subscribe(zwaveTopic + '/configure/#')
+    client.subscribe(zwaveTopic + 'set/#')
+    client.subscribe(zwaveTopic + 'configure/#')
 
     ///Wait for mqtt connection before we fire up the zwave controller the first time to ensure we capture all activity
     if (!ozwConnected) {
@@ -107,7 +107,7 @@ client.on('message', (topic, message) => {
         case /set/.test(trimmedTopic):
             zwaveSetMessage(topic, message)
             break
-        case /config/.test(trimmedTopic):
+        case /configure/.test(trimmedTopic):
             zwaveConfigMessage(topic, message)
             break
         default:
