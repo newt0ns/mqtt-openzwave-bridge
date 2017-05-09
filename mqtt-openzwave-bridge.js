@@ -119,9 +119,11 @@ client.on('message', (topic, message) => {
 
 
 function zwaveConfigMessage(topic, message) {
-    logging.log("zwaveConfigMessage(" + topic + "," + JSON.stringify(message, null, 2))
     try {
-        var args = JSON.stringify(message)
+        var args = JSON.parse(message)
+        
+        logging.log("zwaveConfigMessage(" + topic + "," + JSON.stringify(args), null, 2)
+    
 
         switch (true) {
             case /setNodeName/.test(topic):
