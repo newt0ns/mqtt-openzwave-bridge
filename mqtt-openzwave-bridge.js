@@ -101,6 +101,7 @@ client.on('disconnect', () => {
 
 //Direct the zwave topic to the appropriate function
 client.on('message', (topic, message) => {
+    logging.log("mqtt message recieved, topic:" + topic + " message:" + message)
     var trimmedTopic = topic.substring(zwaveTopic.length + 1)
     switch (true) {
         case /set/.test(trimmedTopic):
@@ -131,7 +132,7 @@ function zwaveConfigMessage(topic, message) {
             case /getNodeNames/.test(topic):
                 zwcallback("config/getNodeNames", JSON.stringify(nodeMap))
                 break
-            case /unsetNodeName/.test(topic):            
+            case /unsetNodeName/.test(topic):
                 if (!(args.nodeid === undefined || args.nodeid === null) && !(args.name === undefined || args.name === null)) {
                     nodeMap[args.nodeid] = args.name.replace("/", "_")
                     fs.write(nodeMapFile, JSON.stringify(nodeMap))
@@ -351,7 +352,7 @@ function nodeReady(nodeid, nodeinfo) {
         //
         logging.log('nodeReady: only|R|W| (nodeid-cmdclass-instance-index): type : current state')
         for (var comclass in ozwnode['classes']) {
-            
+
             switch (comclass) {
                 case 0x25: // COMMAND_CLASS_SWITCH_BINARY
                 case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
