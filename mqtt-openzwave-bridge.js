@@ -102,12 +102,13 @@ client.on('disconnect', () => {
 //Direct the zwave topic to the appropriate function
 client.on('message', (topic, message) => {
     logging.log("mqtt message recieved, topic:" + topic + " message:" + message)
-    var trimmedTopic = topic.substring(zwaveTopic.length + 1)
+    var trimmedTopic = topic.substring(zwaveTopic.length)
+    
     switch (true) {
-        case /set/.test(trimmedTopic):
+        case trimmedTopic.startsWith("set/"):
             zwaveSetMessage(topic, message)
             break
-        case /configure/.test(trimmedTopic):
+        case trimmedTopic.startsWith("configure/"):
             zwaveConfigMessage(topic, message)
             break
         default:
