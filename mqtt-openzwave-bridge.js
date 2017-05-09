@@ -435,7 +435,8 @@ function zwcallback(event, arghash) {
     logging.log('zwcallback: ' + util.format("%s, args: %j", event, arghash))
     try {
         var nodeDesc = ""
-        var label = undefined
+        var label = ""
+
         if (!(arghash['nodeid'] === undefined || arghash['nodeid'] === null)) {
             var nodeid = arghash['nodeid']
             label = arghash["nodeid"].value.label.lowerCase()
