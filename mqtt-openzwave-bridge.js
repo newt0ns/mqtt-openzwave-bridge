@@ -103,7 +103,7 @@ client.on('disconnect', () => {
 client.on('message', (topic, message) => {
     logging.log("mqtt message recieved, topic:" + topic + " message:" + message)
     var trimmedTopic = topic.substring(zwaveTopic.length)
-    
+
     switch (true) {
         case trimmedTopic.startsWith("set/"):
             zwaveSetMessage(topic, message)
@@ -121,20 +121,26 @@ client.on('message', (topic, message) => {
 function zwaveConfigMessage(topic, message) {
     try {
         var args = JSON.parse(message)
-        
+
         logging.log("zwaveConfigMessage(" + topic + "," + JSON.stringify(args, null, 2))
-    
+
 
         switch (true) {
             case /setNodeName/.test(topic):
                 if (!(args.nodeid === undefined || args.nodeid === null) && !(args.name === undefined || args.name === null)) {
-                    logging.log("zwaveConfigMessage(): Setting node["+args.nodeid+"] name to "+ args.name)
+                    logging.log("zwaveConfigMessage(): Setting node[" + args.nodeid + "] name to " + args.name)
                     nodeMap[args.nodeid] = args.name.replace("/", "_")
-                    fs.write(nodeMapFile, JSON.stringify(nodeMap))
+                    fs.writeFile(nodeMapFile, JSON.stringify(nodeMap), function (err) {
+                        if (err) {
+                            logging.error("Error saving nodeMapFile "+err)
+                        }
+                        logging.log("The nodeMapFile was saved!");
+                    }); 
+)
                 }
                 break
             case /getNodeNames/.test(topic):
-            logging.log("zwaveConfigMessage(): getNodeNames: "+JSON.stringify(nodeMap, null, 2))
+                logging.log("zwaveConfigMessage(): getNodeNames: " + JSON.stringify(nodeMap, null, 2))
                 zwcallback("configureResult/getNodeNames", JSON.stringify(nodeMap))
                 break
             case /unsetNodeName/.test(topic):
