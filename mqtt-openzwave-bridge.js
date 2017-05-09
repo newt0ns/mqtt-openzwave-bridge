@@ -439,7 +439,7 @@ function zwcallback(event, arghash) {
 
         if (!(arghash['nodeid'] === undefined || arghash['nodeid'] === null)) {
             var nodeid = arghash['nodeid']
-            label = (arghash['label'] != undefined) ? "/" + arghash['label'].toLowerCase() : ""
+            label = (arghash['label'] != undefined) ? arghash['label'].toLowerCase()+ "/" : ""
             var nodeName = nodeMap[nodeid]
             if (!(nodeName === undefined || nodeName === null)) {
                 nodeDesc = nodeName + "/";
