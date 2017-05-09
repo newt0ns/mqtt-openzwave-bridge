@@ -123,7 +123,7 @@ function zwaveConfigMessage(topic, message) {
 
         switch (true) {
             case /setNodeName/.test(topic):
-                if (!(args.nodeid === 'undefined' || args.nodeid === null) && !(args.name === 'undefined' || args.name === null)) {
+                if (!(args.nodeid === undefined || args.nodeid === null) && !(args.name === undefined || args.name === null)) {
                     nodeMap[args.nodeid] = args.name.replace("/", "_")
                     fs.write(nodeMapFile, JSON.stringify(nodeMap))
                 }
@@ -132,7 +132,7 @@ function zwaveConfigMessage(topic, message) {
                 zwcallback("config/getNodeNames", JSON.stringify(nodeMap))
                 break
             case /unsetNodeName/.test(topic):            
-                if (!(args.nodeid === 'undefined' || args.nodeid === null) && !(args.name === 'undefined' || args.name === null)) {
+                if (!(args.nodeid === undefined || args.nodeid === null) && !(args.name === undefined || args.name === null)) {
                     nodeMap[args.nodeid] = args.name.replace("/", "_")
                     fs.write(nodeMapFile, JSON.stringify(nodeMap))
                 }
@@ -208,7 +208,7 @@ function zwaveSetMessage(topic, message) {
                     try {
                         var result = ozw[topic].apply(ozw, args)
                         logging.log('direct API call success, result=' + JSON.stringify(result))
-                        if (typeof result != 'undefined') {
+                        if (typeof result != undefined) {
                             payload.result = result
                             // send off the direct API call's result to the output
                             client.publish(zwaveTopic + '/apiResult/' + topic, JSON.stringify(payload))
@@ -423,14 +423,14 @@ function zwcallback(event, arghash) {
     logging.log('zwcallback: ' + util.format("%s, args: %j", event, arghash))
     try {
         var nodeDesc = ""
-        if (!(arghash['nodeid'] === 'undefined' || arghash['nodeid'] === null)) {
+        if (!(arghash['nodeid'] === undefined || arghash['nodeid'] === null)) {
             var nodeid = arghash['nodeid']
             var nodeName = nodeMap[nodeid]
-            if (!(nodeName === 'undefined' || nodeName === null)) {
-                nodeDesc = "/" + nodeName + "/";
+            if (!(nodeName === undefined || nodeName === null)) {
+                nodeDesc = nodeName + "/";
             }
             else {
-                nodeDesc = "/node_" + nodeid + "/"
+                nodeDesc = "node_" + nodeid + "/"
             }
         }
     }
