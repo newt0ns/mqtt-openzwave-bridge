@@ -453,7 +453,7 @@ function zwcallback(event, arghash) {
         logging.log("zwcallback: error, " + err)
     }
 
-    client.publish(zwaveTopic + nodeDesc + label + event, JSON.stringify(arghash))
+    client.publish(zwaveTopic + nodeDesc + label + event, JSON.stringify(arghash), {retain: true})
 
 }
 
