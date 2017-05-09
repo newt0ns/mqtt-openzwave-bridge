@@ -435,8 +435,11 @@ function zwcallback(event, arghash) {
     logging.log('zwcallback: ' + util.format("%s, args: %j", event, arghash))
     try {
         var nodeDesc = ""
+        var label = undefined
         if (!(arghash['nodeid'] === undefined || arghash['nodeid'] === null)) {
             var nodeid = arghash['nodeid']
+            label = arghash["nodeid"].value.label.lowerCase()
+            label = (label != undefined) ? "/" + label : ""
             var nodeName = nodeMap[nodeid]
             if (!(nodeName === undefined || nodeName === null)) {
                 nodeDesc = nodeName + "/";
@@ -450,7 +453,7 @@ function zwcallback(event, arghash) {
         logging.log("zwcallback: error, " + err)
     }
 
-    client.publish(zwaveTopic + nodeDesc + event, JSON.stringify(arghash))
+    client.publish(zwaveTopic + nodeDesc + label + event, JSON.stringify(arghash))
 
 }
 
