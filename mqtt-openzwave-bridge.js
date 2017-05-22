@@ -130,7 +130,7 @@ function zwaveConfigMessage(topic, message) {
                 if (!(args.nodeid === undefined || args.nodeid === null) && !(args.name === undefined || args.name === null)) {
                     logging.log("zwaveConfigMessage(): Setting node[" + args.nodeid + "] name to " + args.name)
                     nodeMap[args.nodeid] = args.name.replace("/", "_")
-                    fs.writeFile(nodeMapFile, JSON.stringify(nodeMap), function (err) {
+                    fs.writeFile(nodeMapFile, JSON.stringify(nodeMap, null, 2), function (err) {
                         if (err) {
                             logging.error("Error saving nodeMapFile " + err)
                         }
