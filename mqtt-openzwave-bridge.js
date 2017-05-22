@@ -162,10 +162,10 @@ function zwaveConfigMessage(topic, message) {
 //Parse the incomming mqtt message for some basic actions, or delve into the full API
 function zwaveSetMessage(topic, message) {
     try {
-
         logging.log(' mqtt message received, topic:' + topic + ', message: ' + message)
 
         var payload
+        var trimmedTopic = topic.substring(zwaveTopic+4)
 
         try {
             //We're expecting all messages to be in a JSON format
@@ -179,20 +179,20 @@ function zwaveSetMessage(topic, message) {
 
         switch (true) {
             // switch On/Off: for basic single-instance switches and dimmers
-            case /switchOn/.test(topic):
+            case /switchOn/.test(trimmedTopic):
                 ozw.setValue(payload.nodeid, 37, 1, 0, true)
                 break
-            case /switchOff/.test(topic):
+            case /switchOff/.test(trimmedTopic):
                 ozw.setValue(payload.nodeid, 37, 1, 0, false)
                 break
 
             // setLevel: for dimmers
-            case /setLevel/.test(topic):
+            case /setLevel/.test(trimmedTopic):
                 ozw.setValue(payload.nodeid, 38, 1, 0, payload.value)
                 break
 
             // setValue: for everything else
-            case /setValue/.test(topic):
+            case /setValue/.test(trimmedTopic):
                 logging.log(util.format("ZWaveOut.setValue payload: %j", payload))
                 ozw.setValue(
                     payload.nodeid, (payload.cmdclass || 37), // default cmdclass: on-off
@@ -209,7 +209,7 @@ function zwaveSetMessage(topic, message) {
              * If the command needs the HomeID as the 1st arg, use "payload.prependHomeId"
              * */
             default:
-                if (topic && typeof ozw[topic] === 'function' && payload) {
+                if (trimmedTopic && typeof ozw[trimmedTopic] === 'function' && payload) {
 
                     var args = payload.args || []
 
@@ -223,10 +223,10 @@ function zwaveSetMessage(topic, message) {
                         if (typeof result != undefined) {
                             payload.result = result
                             // send off the direct API call's result to the output
-                            client.publish(zwaveTopic + '/apiResult/' + topic, JSON.stringify(payload))
+                            client.publish(zwaveTopic + '/apiResult/' + trimmedTopic, JSON.stringify(payload))
                         }
                     } catch (err) {
-                        logging.log('direct API call to ' + topic + ' failed: ' + err, 'error')
+                        logging.log('direct API call to ' + trimmedTopic + ' failed: ' + err, 'error')
                     }
                 }
         }
