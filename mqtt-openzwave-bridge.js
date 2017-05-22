@@ -224,7 +224,7 @@ function zwaveSetMessage(topic, message) {
                         if (typeof result != undefined) {
                             payload.result = result
                             // send off the direct API call's result to the output
-                            client.publish(zwaveTopic + '/apiResult/' + trimmedTopic, JSON.stringify(payload))
+                            client.publish(zwaveTopic + 'apiResult/' + trimmedTopic, JSON.stringify(payload))
                         }
                     } catch (err) {
                         logging.log('direct API call to ' + trimmedTopic + ' failed: ' + err, 'error')
