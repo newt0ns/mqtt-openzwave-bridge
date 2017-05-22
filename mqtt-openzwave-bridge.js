@@ -162,10 +162,11 @@ function zwaveConfigMessage(topic, message) {
 //Parse the incomming mqtt message for some basic actions, or delve into the full API
 function zwaveSetMessage(topic, message) {
     try {
-        logging.log(' mqtt message received, topic:' + topic + ', message: ' + message)
 
         var payload
-        var trimmedTopic = topic.substring(zwaveTopic+4)
+        var trimmedTopic = topic.substring(topic.lastIndexOf("/")+1)
+
+        logging.log(' mqtt set message received, topic:' + trimmedTopic + ', message: ' + message)
 
         try {
             //We're expecting all messages to be in a JSON format
