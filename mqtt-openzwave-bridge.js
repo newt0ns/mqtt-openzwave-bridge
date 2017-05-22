@@ -219,7 +219,7 @@ function zwaveSetMessage(topic, message) {
                     logging.log('attempting direct API call to ' + topic + '()')
 
                     try {
-                        var result = ozw[topic].apply(ozw, args)
+                        var result = ozw[trimmedTopic].apply(ozw, args)
                         logging.log('direct API call success, result=' + JSON.stringify(result))
                         if (typeof result != undefined) {
                             payload.result = result
