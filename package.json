@@ -24,8 +24,9 @@
         "bridge"
     ],
     "dependencies": {
-        "mqtt": "^2.6.2",
-        "openzwave-shared": "^1.3.4",
+        "homeautomation-js-lib": "git://github.com/terafin/homeautomation-js-lib.git",
+        "mqtt": "latest",
+        "openzwave-shared": "^1.4.0",
         "syslog": "^0.1.1",
         "util": "^0.10.3"
     }

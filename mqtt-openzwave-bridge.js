@@ -1,8 +1,9 @@
 
-const logging = require('./lib/logging.js')
+const mqtt = require('mqtt')
+const _ = require('lodash')
+const logging = require('homeautomation-js-lib/logging.js')
 const util = require('util')
 const OpenZwave = require('openzwave-shared')
-const mqtt = require('mqtt')
 const fs = require('fs')
 
 var ozw = null
@@ -20,8 +21,6 @@ var UUIDPREFIX = "_macaddr_"
 var HOMENAME = "_homename_"
 
 var nodes = {}
-
-logging.set_enabled(true)
 
 var ozwEvents = {
     'driver ready': driverReady,
@@ -65,11 +64,11 @@ client = mqtt.connect(mqttHost, mqttOptions)
 
 // MQTT Observation
 client.on('error', (error) => {
-    logging.log("mqtt error: " + error)
+    logging.error("mqtt error: " + error)
 })
 
 client.on('connect', () => {
-    logging.log('mqtt connected')
+    logging.info('mqtt connected')
     mqttConnected = true
     client.subscribe(zwaveTopic + 'set/#')
     client.subscribe(zwaveTopic + 'configure/#')
@@ -81,12 +80,12 @@ client.on('connect', () => {
 
         //Map the callbacks to zwave events
         Object.keys(ozwEvents).forEach(function (evt) {
-            logging.log('addListener ' + evt)
+            logging.info('addListener ' + evt)
             ozw.on(evt, ozwEvents[evt])
         })
 
         /* time to connect to zwave stick */
-        logging.log('connecting to ' + zwaveDevice)
+        logging.info('connecting to ' + zwaveDevice)
         ozw.connect(zwaveDevice)
         ozwConnected = true
     }
@@ -94,14 +93,14 @@ client.on('connect', () => {
 
 //I thought you loved me!?
 client.on('disconnect', () => {
-    logging.log('mqtt reconnecting...\n')
+    logging.info('mqtt reconnecting...\n')
     client.connect(mqttHost, mqttOptions) //You'll come around
 })
 
 
 //Direct the zwave topic to the appropriate function
 client.on('message', (topic, message) => {
-    logging.log("mqtt message recieved, topic:" + topic + " message:" + message)
+    logging.info("mqtt message recieved, topic:" + topic + " message:" + message)
     var trimmedTopic = topic.substring(zwaveTopic.length)
 
     switch (true) {
@@ -122,7 +121,7 @@ function zwaveConfigMessage(topic, message) {
     try {
         var args = JSON.parse(message)
 
-        logging.log("zwaveConfigMessage(" + topic + "," + JSON.stringify(args, null, 2))
+        logging.info("zwaveConfigMessage(" + topic + "," + JSON.stringify(args, null, 2))
 
 
         switch (true) {
@@ -134,13 +133,13 @@ function zwaveConfigMessage(topic, message) {
                         if (err) {
                             logging.error("Error saving nodeMapFile " + err)
                         }
-                        logging.log("The nodeMapFile was saved!");
+                        logging.info("The nodeMapFile was saved!");
                     });
 
                 }
                 break
             case /getNodeNames/.test(topic):
-                logging.log("zwaveConfigMessage(): getNodeNames: " + JSON.stringify(nodeMap, null, 2))
+                logging.info("zwaveConfigMessage(): getNodeNames: " + JSON.stringify(nodeMap, null, 2))
                 zwcallback("configureResult/getNodeNames", JSON.stringify(nodeMap))
                 break
             case /unsetNodeName/.test(topic):
@@ -166,7 +165,7 @@ function zwaveSetMessage(topic, message) {
         var payload
         var trimmedTopic = topic.substring(topic.lastIndexOf("/")+1)
 
-        logging.log(' mqtt set message received, topic:' + trimmedTopic + ', message: ' + message)
+        logging.info(' mqtt set message received, topic:' + trimmedTopic + ', message: ' + message)
 
         try {
             //We're expecting all messages to be in a JSON format
@@ -176,7 +175,7 @@ function zwaveSetMessage(topic, message) {
             return
         }
 
-        logging.log(JSON.stringify(payload, null, 2))
+        logging.info(JSON.stringify(payload, null, 2))
 
         switch (true) {
             // switch On/Off: for basic single-instance switches and dimmers
@@ -194,7 +193,7 @@ function zwaveSetMessage(topic, message) {
 
             // setValue: for everything else
             case /setValue/.test(trimmedTopic):
-                logging.log(util.format("ZWaveOut.setValue payload: %j", payload))
+                logging.info(util.format("ZWaveOut.setValue payload: %j", payload))
                 ozw.setValue(
                     payload.nodeid, (payload.cmdclass || 37), // default cmdclass: on-off
                     (payload.instance || 1), // default instance
@@ -216,18 +215,18 @@ function zwaveSetMessage(topic, message) {
 
                     if (payload.prependHomeId) args.unshift(ozwConfig.homeid)
 
-                    logging.log('attempting direct API call to ' + topic + '()')
+                    logging.info('attempting direct API call to ' + topic + '()')
 
                     try {
                         var result = ozw[trimmedTopic].apply(ozw, args)
-                        logging.log('direct API call success, result=' + JSON.stringify(result))
+                        logging.info('direct API call success, result=' + JSON.stringify(result))
                         if (typeof result != undefined) {
                             payload.result = result
                             // send off the direct API call's result to the output
                             client.publish(zwaveTopic + 'apiResult/' + trimmedTopic, JSON.stringify(payload))
                         }
                     } catch (err) {
-                        logging.log('direct API call to ' + trimmedTopic + ' failed: ' + err, 'error')
+                        logging.info('direct API call to ' + trimmedTopic + ' failed: ' + err, 'error')
                     }
                 }
         }
@@ -246,7 +245,7 @@ function driverReady(homeid) {
     var homeHex = '0x' + homeid.toString(16)
     HOMENAME = homeHex
     ozwConfig.name = homeHex
-    logging.log('scanning network with homeid: ' + homeHex)
+    logging.info('scanning network with homeid: ' + homeHex)
     zwcallback('driver ready', ozwConfig)
 }
 
@@ -279,14 +278,14 @@ function nodeAdded(nodeid) {
 function valueAdded(nodeid, comclass, valueId) {
     var ozwnode = nodes[nodeid]
     if (!ozwnode) {
-        logging.log('valueAdded: no such node: ' + nodeid + ' error!')
+        logging.info('valueAdded: no such node: ' + nodeid + ' error!')
     }
     if (!ozwnode['classes'][comclass])
         ozwnode['classes'][comclass] = {}
     if (!ozwnode['classes'][comclass][valueId.instance])
         ozwnode['classes'][comclass][valueId.instance] = {}
     // add to cache
-    logging.log("valueAdded: " + JSON.stringify(valueId))
+    logging.info("valueAdded: " + JSON.stringify(valueId))
     ozwnode['classes'][comclass][valueId.instance][valueId.index] = valueId
     // tell NR
     zwcallback('value added', {
@@ -304,7 +303,7 @@ function valueAdded(nodeid, comclass, valueId) {
 function valueChanged(nodeid, comclass, valueId) {
     var ozwnode = nodes[nodeid]
     if (!ozwnode) {
-        logging.log('valueChanged: no such node: ' + nodeid, 'error')
+        logging.info('valueChanged: no such node: ' + nodeid, 'error')
     } else {
         // valueId: OpenZWave ValueID (struct) - not just a boolean
         var oldst
@@ -347,7 +346,7 @@ function valueRemoved(nodeid, comclass, instance, index) {
             "instance": instance
         })
     } else {
-        logging.log('valueRemoved: no such node: ' + nodeid, 'error')
+        logging.info('valueRemoved: no such node: ' + nodeid, 'error')
     }
 }
 
@@ -362,7 +361,7 @@ function nodeReady(nodeid, nodeinfo) {
         }
         ozwnode.ready = true
         //
-        logging.log('nodeReady: only|R|W| (nodeid-cmdclass-instance-index): type : current state')
+        logging.info('nodeReady: only|R|W| (nodeid-cmdclass-instance-index): type : current state')
         for (var comclass in ozwnode['classes']) {
 
             switch (comclass) {
@@ -382,7 +381,7 @@ function nodeReady(nodeid, nodeinfo) {
                     var ozwval = values[inst][idx]
                     var rdonly = ozwval.read_only ? '*' : ' '
                     var wronly = ozwval.write_only ? '*' : ' '
-                    logging.log('           =>' + util.format(
+                    logging.info('           =>' + util.format(
                         '\t|%s|%s| %s: %s:\t%s\t', rdonly, wronly, ozwval.value_id, ozwval.label, ozwval.value))
                 }
         }
@@ -396,7 +395,7 @@ function nodeReady(nodeid, nodeinfo) {
 
 //Something evented
 function nodeEvent(nodeid, evtcode) {
-    logging.log('nodeEvent: ' + util.format('node %d: %d', nodeid, evtcode))
+    logging.info('nodeEvent: ' + util.format('node %d: %d', nodeid, evtcode))
     zwcallback('node event', {
         "nodeid": nodeid,
         "event": evtcode
@@ -405,7 +404,7 @@ function nodeEvent(nodeid, evtcode) {
 
 //zwave controller notifications land here, timeouts, sleep notifications, etc.
 function notification(nodeid, notif, help) {
-    logging.log('notification: ' + util.format('node %d: %s', nodeid, help))
+    logging.info('notification: ' + util.format('node %d: %s', nodeid, help))
     zwcallback('notification', {
         nodeid: nodeid,
         notification: notif,
@@ -415,7 +414,7 @@ function notification(nodeid, notif, help) {
 
 //Like a 90's flatbed
 function scanComplete() {
-    logging.log('network scan complete.')
+    logging.info('network scan complete.')
     zwcallback('scan complete', {})
 }
 
@@ -427,13 +426,13 @@ function controllerCommand(nodeid, state, errcode, help) {
         errcode: errcode,
         help: help
     }
-    logging.log('controllerCommannd: ' + util.format('command feedback received: %j', JSON.stringify(obj)))
+    logging.info('controllerCommannd: ' + util.format('command feedback received: %j', JSON.stringify(obj)))
     zwcallback('controller command', obj)
 }
 
 //dispatch OpenZwave events to mqtt
 function zwcallback(event, arghash) {
-    logging.log('zwcallback: ' + util.format("%s, args: %j", event, arghash))
+    logging.info('zwcallback: ' + util.format("%s, args: %j", event, arghash))
     try {
         var nodeDesc = ""
         var label = ""
@@ -451,7 +450,7 @@ function zwcallback(event, arghash) {
         }
     }
     catch (err) {
-        logging.log("zwcallback: error, " + err)
+        logging.info("zwcallback: error, " + err)
     }
 
     client.publish(zwaveTopic + nodeDesc + label + event, JSON.stringify(arghash), {retain: true})
