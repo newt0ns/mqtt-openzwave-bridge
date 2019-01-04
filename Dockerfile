@@ -10,6 +10,7 @@ RUN apt-get update\
 RUN export GIT_SSL_NO_VERIFY=true \
     && git clone https://github.com/OpenZWave/open-zwave.git \
     && cd open-zwave \
+    &&  git checkout V1.5 \
     && make install PREFIX=/usr \
     && cd .. \
     && cp -vr /usr/lib64/* /usr/lib \
