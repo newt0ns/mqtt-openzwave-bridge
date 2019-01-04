@@ -4,17 +4,25 @@ MAINTAINER "Nate Stuart [newt0ns]"
 
 # Compile openzwave-mqtt and it deps, then remove all unnecessary stuff.
 # Must be done in single layer to reduce image size.
-RUN apt-get update
-RUN apt-get install -y git
-RUN apt-get install -y npm gcc g++ libudev-dev libmosquitto-dev 
-RUN git clone https://github.com/OpenZWave/open-zwave.git && cd open-zwave &&  git checkout V1.5 && make install PREFIX=/usr && cd .. && cp -v /usr/lib64/* /usr/lib && find /usr |grep libopenzwave && ldconfig -v
+RUN apt-get update\
+    && apt-get install -y --no-install-recommends git npm gcc g++ make libudev-dev \
+    && apt-get clean
+RUN export GIT_SSL_NO_VERIFY=true \
+    && git clone https://github.com/OpenZWave/open-zwave.git \
+    && cd open-zwave \
+    && make install PREFIX=/usr \
+    && cd .. \
+    && cp -vr /usr/lib64/* /usr/lib \
+    && ldconfig -v
 
-RUN mkdir -p /usr/node_app
-
-RUN git clone https://github.com/newt0ns/mqtt-openzwave-bridge.git && cd mqtt-openzwave-bridge
+RUN mkdir -p /usr/node_app \
+    && export GIT_SSL_NO_VERIFY=true \
+    && git clone https://github.com/newt0ns/mqtt-openzwave-bridge.git \
+    && cd mqtt-openzwave-bridge
 
 COPY . /usr/node_app
 WORKDIR /usr/node_app
-RUN npm install --production
+RUN npm config set registry http://registry.npmjs.org/  \
+    && npm install --production
 
 CMD ["npm", "start"]
