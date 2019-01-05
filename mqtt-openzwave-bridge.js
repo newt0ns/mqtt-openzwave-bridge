@@ -127,7 +127,7 @@ function zwaveConfigMessage(topic, message) {
         switch (true) {
             case /setNodeName/.test(topic):
                 if (!(args.nodeid === undefined || args.nodeid === null) && !(args.name === undefined || args.name === null)) {
-                    logging.log("zwaveConfigMessage(): Setting node[" + args.nodeid + "] name to " + args.name)
+                    logging.info("zwaveConfigMessage(): Setting node[" + args.nodeid + "] name to " + args.name)
                     nodeMap[args.nodeid] = args.name.replace("/", "_")
                     fs.writeFile(nodeMapFile, JSON.stringify(nodeMap, null, 2), function (err) {
                         if (err) {
@@ -309,7 +309,7 @@ function valueChanged(nodeid, comclass, valueId) {
         var oldst
         if (ozwnode.ready || allowunreadyupdates) {
             oldst = ozwnode['classes'][comclass][valueId.instance][valueId.index].value
-            logging.log(util.format(
+            logging.info(util.format(
                 'zwave node %d: changed: %d:%s:%s -> %j', nodeid, comclass,
                 valueId['label'], oldst, JSON.stringify(valueId)))
             // tell NR only if the node is marked as ready
@@ -370,7 +370,7 @@ function nodeReady(nodeid, nodeinfo) {
                 case 0x30: // COMMAND_CLASS_SENSOR_BINARY
                 case 0x31: // COMMAND_CLASS_SENSOR_MULTILEVEL
                 case 0x60: // COMMAND_CLASS_MULTI_INSTANCE
-                    log.logging("         => Enabling polling for node " + nodeid + ":" + comclass)
+                    logging.info("         => Enabling polling for node " + nodeid + ":" + comclass)
                     ozwDriver.enablePoll(nodeid, comclass)
                     break
             }
